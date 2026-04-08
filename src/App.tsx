@@ -1,120 +1,151 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import './App.css'
 
+type Task = {
+  id: number
+  title: string
+  completed: boolean
+}
+
+const initialTasks: Task[] = [
+  { id: 1, title: 'Review homepage layout', completed: true },
+  { id: 2, title: 'Confirm stakeholder demo talking points', completed: false },
+  { id: 3, title: 'Prepare one extra example task', completed: false },
+]
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [tasks, setTasks] = useState<Task[]>(initialTasks)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+
+  const completedCount = useMemo(
+    () => tasks.filter((task) => task.completed).length,
+    [tasks],
+  )
+
+  const remainingCount = tasks.length - completedCount
+
+  const handleAddTask = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const title = newTaskTitle.trim()
+
+    if (!title) {
+      return
+    }
+
+    setTasks((currentTasks) => [
+      {
+        id: Date.now(),
+        title,
+        completed: false,
+      },
+      ...currentTasks,
+    ])
+    setNewTaskTitle('')
+  }
+
+  const handleToggleTask = (taskId: number) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId
+          ? { ...task, completed: !task.completed }
+          : task,
+      ),
+    )
+  }
+
+  const handleRemoveTask = (taskId: number) => {
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !== taskId),
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+    <main className="app-shell">
+      <section className="hero-card">
+        <div className="hero-copy">
+          <p className="eyebrow">Stakeholder demo</p>
+          <h1>Simple TODO app, ready to click through</h1>
+          <p className="hero-text">
+            Add tasks, mark them complete, and remove them with a clean,
+            presentation-friendly interface.
           </p>
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+        <div className="summary-grid" aria-label="Task summary">
+          <article className="summary-card">
+            <span className="summary-label">Total tasks</span>
+            <strong className="summary-value">{tasks.length}</strong>
+          </article>
+          <article className="summary-card">
+            <span className="summary-label">Completed</span>
+            <strong className="summary-value">{completedCount}</strong>
+          </article>
+          <article className="summary-card">
+            <span className="summary-label">Remaining</span>
+            <strong className="summary-value">{remainingCount}</strong>
+          </article>
         </div>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <section className="todo-card" aria-labelledby="todo-heading">
+        <div className="card-header">
+          <div>
+            <p className="section-kicker">Today&apos;s plan</p>
+            <h2 id="todo-heading">TODO list</h2>
+          </div>
+        </div>
+
+        <form className="task-form" onSubmit={handleAddTask}>
+          <label className="task-form-label" htmlFor="new-task">
+            Add a new task
+          </label>
+          <div className="task-form-row">
+            <input
+              id="new-task"
+              name="new-task"
+              className="task-input"
+              type="text"
+              placeholder="Enter a task for the demo"
+              value={newTaskTitle}
+              onChange={(event) => setNewTaskTitle(event.target.value)}
+            />
+            <button className="primary-button" type="submit">
+              Add task
+            </button>
+          </div>
+        </form>
+
+        <ul className="task-list">
+          {tasks.map((task) => (
+            <li
+              key={task.id}
+              className={`task-item ${task.completed ? 'is-complete' : ''}`}
+            >
+              <label className="task-main">
+                <input
+                  className="task-checkbox"
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => handleToggleTask(task.id)}
+                />
+                <span className="task-title">{task.title}</span>
+              </label>
+
+              <button
+                className="ghost-button"
+                type="button"
+                onClick={() => handleRemoveTask(task.id)}
+                aria-label={`Remove ${task.title}`}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
   )
 }
 
